@@ -52,7 +52,6 @@
         </ol>
         These lines and the output of the 74HC4511 are fed into a complex network of AND and OR gates — 2x 74HC08, 2x 74HC32, and a 74HC4075. They determine which LEDs should light up for each column in the digit being displayed.  For example, if the middle segment of the digit should be lit up (for a 2, 3, 4, 5, 6, 8, or 9), then the AND and OR gates will enable the middle LED on columns 1-5.  If the upper-left segment should be lit up (for a 0, 4, 5, 6, 8, or 9) then the top three LEDs will be lit up, but only on column 1.</p>
         <p>Here's how the 7-segment decoder and AND/OR gates turn the value 4 into LEDs:</p>
-
         BCD to 7-segment decoder:
         <code>
             &nbsp;====
@@ -62,8 +61,7 @@
             ||&nbsp;&nbsp;<strong><b>||</b></strong>
             ||&nbsp;&nbsp;<strong><b>||</b></strong>
             &nbsp;====</code>
-        <div class="photo right pad noborder"><a href="http://swannman.smugmug.com/2008/Electronics/listing/161036402_dTZqo-L.gif"><img src="http://swannman.smugmug.com/2008/Electronics/listing/161036402_dTZqo-S.gif" width="250px" /></a></div>
-        7-segment output and demux lines to LEDs via AND/OR network:
+        <p>7-segment output and demux lines to LEDs via AND/OR network:</p>
         <code>
             <b>&nbsp;Line 1 2 3 4 5 6 7</b>
             <b>LED1:</b> <strong><b>1</b></strong> 0 0 0 <strong><b>1</b></strong> 0 0
@@ -71,29 +69,19 @@
             <b>LED3:</b> <strong><b>1 1 1 1 1</b></strong> 0 0
             <b>LED4:</b> 0 0 0 0 <strong><b>1</b></strong> 0 0
             <b>LED5:</b> 0 0 0 0 <strong><b>1</b></strong> 0 0</code>
-
-        The AND/OR network drives the LEDs through a 74HC541 octal buffer that can handle the high output current.  The LEDs are connected to the display board by a 10-pin connector — five pins are outputs (one per LED), the other five are a common ground shared by all the LEDs.
-
-        When bits 2-4 of the 74HC590 have cycled through all the columns, bits 5-7 select the next digit and the digit-to-LED conversion process repeats again.
-
-        When the 74HC590 counter overflows, it resets the flip-flop and stops the 555 oscillator.  The board then sits idle until the next pulse from the optical interrupter.
-
+        <p>The AND/OR network drives the LEDs through a 74HC541 octal buffer that can handle the high output current.  The LEDs are connected to the display board by a 10-pin connector — five pins are outputs (one per LED), the other five are a common ground shared by all the LEDs.</p>
+        <p>When bits 2-4 of the 74HC590 have cycled through all the columns, bits 5-7 select the next digit and the digit-to-LED conversion process repeats again.</p>
+        <p>When the 74HC590 counter overflows, it resets the flip-flop and stops the 555 oscillator.  The board then sits idle until the next pulse from the optical interrupter.</p>
         <h3>The power board</h3>
-        <em>This board provides power to the clock and display boards and connects their 10-pin interfaces.</em>
-
-        The ten-pin connectors from the clock and display boards plug into the power board using ribbon cables.  The power board bridges the two connectors with a common bus and provides 5V via a MAX603 linear regulator.  A 9V battery connected to the MAX603 is a convenient power source.
-
+        <p><em>This board provides power to the clock and display boards and connects their 10-pin interfaces.</em></p>
+        <p>The ten-pin connectors from the clock and display boards plug into the power board using ribbon cables.  The power board bridges the two connectors with a common bus and provides 5V via a MAX603 linear regulator.  A 9V battery connected to the MAX603 is a convenient power source.</p>
         <h3>Hardware</h3>
-        <em>Five LEDs are arranged on an arm which sweeps back-and-forth. When the arm begins to sweep to the left, a piece of wire on the motor shaft trips the optical interrupter and wakes up the display board.</em>
-
-        Creating the hardware mechanism was a surprisingly challenging part of the project.  Microcontroller POV clocks typically spin the entire board along with the LEDs, but that's not well-suited to my three bulky circuit boards.  My original design used a slip ring to interface between the static circuit boards and a spinning LED arm, but slip rings are specialty parts and very expensive.  Instead I decided to use a <a href="http://www.freezeray.com/flashFiles/treadle.htm">treadle linkage</a> to convert a spinning motor shaft into an oscillating back-and-forth motion.
-
-        While this works, the change in momentum when the linkage changes directions causes stress on the mechanism.  I weighted the base plate with lead to hold it steady, which helped.  I'm still searching for a better design — without wood- or metalworking tools, I have to rely on off-the-shelf construction kits. The current mechanism uses <a href="http://www.tamiya.com/english/products/list/educational/kit70001.htm">Tamiya's</a> line of motors and plastic construction materials, but I'm interested in reader suggestions for better construction systems.
-
+        <p><em>Five LEDs are arranged on an arm which sweeps back-and-forth. When the arm begins to sweep to the left, a piece of wire on the motor shaft trips the optical interrupter and wakes up the display board.</em></p>
+        <p>Creating the hardware mechanism was a surprisingly challenging part of the project.  Microcontroller POV clocks typically spin the entire board along with the LEDs, but that's not well-suited to my three bulky circuit boards.  My original design used a slip ring to interface between the static circuit boards and a spinning LED arm, but slip rings are specialty parts and very expensive.  Instead I decided to use a <a href="http://www.freezeray.com/flashFiles/treadle.htm">treadle linkage</a> to convert a spinning motor shaft into an oscillating back-and-forth motion.</p>
+        <p>While this works, the change in momentum when the linkage changes directions causes stress on the mechanism.  I weighted the base plate with lead to hold it steady, which helped.  I'm still searching for a better design — without wood- or metalworking tools, I have to rely on off-the-shelf construction kits. The current mechanism uses <a href="http://www.tamiya.com/english/products/list/educational/kit70001.htm">Tamiya's</a> line of motors and plastic construction materials, but I'm interested in reader suggestions for better construction systems.</p>
         <h3>Test equipment</h3>
-        I began with a <a href="http://swannman.wordpress.com/2006/06/18/tektronix-465-oscilloscope/">Tektronix 461 analog scope</a> and quickly realized that I needed a logic analyzer to sample and hold many digital signals at once.  An <a href="http://swannman.wordpress.com/2006/11/17/christmas-in-november/">HP 1631D</a> worked well for the initial build-out, but as the design progressed I needed more channels and a better screen.  I ended up with an <a href="http://swannman.wordpress.com/2007/06/09/live-and-in-color/">HP 16500B</a> with lots of headroom for future projects. 
-
+        <p>I began with a <a href="http://swannman.wordpress.com/2006/06/18/tektronix-465-oscilloscope/">Tektronix 461 analog scope</a> and quickly realized that I needed a logic analyzer to sample and hold many digital signals at once.  An <a href="http://swannman.wordpress.com/2006/11/17/christmas-in-november/">HP 1631D</a> worked well for the initial build-out, but as the design progressed I needed more channels and a better screen.  I ended up with an <a href="http://swannman.wordpress.com/2007/06/09/live-and-in-color/">HP 16500B</a> with lots of headroom for future projects.</p> 
         <h3>PCB design</h3>
-        I laid out my printed circuit boards by hand and drew them in Adobe Illustrator. The standard file format for PCB creation is Gerber + NC Drill, not PDF, so I wrote a <a href="http://swannman.wordpress.com/projects/pdf2gerb/">PDF to Gerber converter</a> in Perl to bridge the gap and used <a href="http://batchpcb.com">BatchPCB</a> to produce the physical boards.
+        <p>I laid out my printed circuit boards by hand and drew them in Adobe Illustrator. The standard file format for PCB creation is Gerber + NC Drill, not PDF, so I wrote a <a href="http://swannman.wordpress.com/projects/pdf2gerb/">PDF to Gerber converter</a> in Perl to bridge the gap and used <a href="http://batchpcb.com">BatchPCB</a> to produce the physical boards.</p>
 </body>
 </html>
