@@ -13,15 +13,18 @@ body {
     margin: 8px 8px 8px 16px;
 }
 
-h1 {
-    font-size:2em;
+h1, h3 {
     font-weight:bold;
 }
 
+h1 {
+    font-size:2em;
+    margin-bottom:0.5em;
+}
+
 h3 {
-    margin-top:1em;
-    font-weight: bold;
     font-size: 1.2em;
+    margin-top: 1.2em;
 }
 
 h3 + p {
@@ -48,6 +51,28 @@ em {
     font-style: italic;
 }
 
+a:link, a:visited {
+    text-decoration:none;
+}
+
+a:hover {
+    text-decoration:underline;
+}
+
+.small {
+    font-size:0.8em;
+}
+
+.headingsmall {
+    font-size:10pt;
+    font-weight:normal;
+    display:inline;
+}
+
+.container {
+    max-width:1200px;
+}
+
 .main {
     width:75%;
     float:left;
@@ -56,9 +81,16 @@ em {
 .right {
     width:22%;
     float:right;
-    padding-top:4em;
+    padding-top:3.5em;
 }
 
 .right .photo img {
     width:100%;
+}
+
+.highlightbox {
+    padding: 0.5em 1em;
+    margin-bottom:5px;
+    border: 1px dashed gray;
+    background-color:#FFA;
 }
