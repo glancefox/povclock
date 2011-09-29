@@ -71,7 +71,11 @@
         <p>Designing the hardware mechanism was a challenge.  Microcontroller-based POV clocks typically spin the entire board along with the LEDs, but discrete logic doesn't lend itself to that.  My original design called for a <a href="http://en.wikipedia.org/wiki/Slip_ring">slip ring</a> to connect the circuit boards and spinning LED arm, but I wanted to avoid expensive specialty parts.  Instead I use a <a href="http://www.freezeray.com/flashFiles/treadle.htm">treadle linkage mechanism</a> to convert a spinning motor shaft into side-to-side motion.</p>
         <p>A sewing pin attached to the motor shaft sweeps through the optical interrupter when the LED arm begins to sweep from left to right.  This wakes up the display board and displays the current time.</p>
         <h3>Test equipment</h3>
+<<<<<<< HEAD
         <p>I began the project with a <a href="http://swannman.wordpress.com/2006/06/18/tektronix-465-oscilloscope/">Tektronix 465 analog scope</a> but soon needed to sample and hold many digital signals at once.  An <a href="http://swannman.wordpress.com/2006/11/17/christmas-in-november/">HP 1631D</a> helped me design the digit board and an <a href="http://swannman.wordpress.com/2007/06/09/live-and-in-color/">HP 16500B</a> helped me design and integrate the display board.</p> 
+=======
+        <p>I began with a <a href="http://swannman.wordpress.com/2006/06/18/tektronix-465-oscilloscope/">Tektronix 465 analog scope</a> and quickly realized that I needed a logic analyzer to sample and hold many digital signals at once.  An <a href="http://swannman.wordpress.com/2006/11/17/christmas-in-november/">HP 1631D</a> worked well for the initial build-out, but as the design progressed I needed more channels and a better screen.  I ended up with an <a href="http://swannman.wordpress.com/2007/06/09/live-and-in-color/">HP 16500B</a> with lots of headroom for future projects.</p> 
+>>>>>>> f4ccb3be317f7cba331e5ec88708f057ed8ab93d
         <h3>PCB design</h3>
         <p>I laid out each PCB by hand and drew the traces in Adobe Illustrator. The standard file format for PCB creation is Gerber + NC Drill, not PDF, so I wrote a <a href="http://swannman.wordpress.com/projects/pdf2gerb/">PDF to Gerber converter</a> to bridge the gap and ordered the boards through <a href="http://batchpcb.com">BatchPCB</a>.</p>
         <h3>Project files and license</h3>
@@ -103,6 +107,7 @@
         <div class="photo"><a href="http://swannman.smugmug.com/2008/Electronics/waveform/161036403_m5H8Q-XL-1.gif"><img src="http://swannman.smugmug.com/2008/Electronics/waveform/161036403_m5H8Q-L-1.gif" /></a></div>
         <div class="photo"><a href="http://swannman.smugmug.com/2008/Electronics/listing/161036402_dTZqo-XL.gif"><img src="http://swannman.smugmug.com/2008/Electronics/listing/161036402_dTZqo-M.gif" /></a></div>
         <div class="photo"><a href="http://swannman.smugmug.com/2008/Electronics/i-tC8QQfs/0/XL/DSC0034-XL.jpg"><img src="http://swannman.smugmug.com/2008/Electronics/i-tC8QQfs/0/M/DSC0034-M.jpg" /></a></div>
+        <div class="photo"><a href="http://swannman.smugmug.com/2008/Electronics/i-9QKf3gv/0/XL/DSC0039-XL.jpg"><img src="http://swannman.smugmug.com/2008/Electronics/i-9QKf3gv/0/M/DSC0039-M.jpg" /></a></div>
         <a href="http://swannman.smugmug.com/2008/Electronics/">[more photos]</a>
     </div>
     </div>
