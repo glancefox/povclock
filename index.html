@@ -13,86 +13,79 @@
         <p>I've always been interested in electronics.  I have fond memories of sitting at my grandfather's workbench watching him solder — but, as a software engineer, I never got much exposure to the hardware field.</p>
         <p>In 2006, I decided to change that.  I picked up a vintage oscilloscope and <em><a href="http://www.amazon.com/Art-Electronics-Paul-Horowitz/dp/0521370957/">The Art of Electronics</a></em> and began my studies in earnest.</p>
         <p>First, I built a <a href="http://swannman.wordpress.com/2006/08/24/howto-build-a-flash-trigger/">flash trigger</a> based on someone else's plans.  It worked, but I really wanted to design something of my own — I figured if I could design a circuit from scratch and bring it to fruition, I must have really learned something.</p>
-        <p>When I read about <a href="http://www.bing.com/search?q=pov+clock">persistence-of-vision clocks</a>, I knew that's what I had to build.  All the designs I found used a microcontroller, but that felt like cheating — microcontrollers run software, and I already knew how to code.  I decided to build my clock using only CMOS discrete logic.</p>
-        <p>I started designing the clock in March 2007 and finished the project two years later in April 2009. To my knowledge it's the only POV clock implemented entirely in discrete logic without a microcontroller.</p>
+        <p>The first time I saw a <a href="http://www.bing.com/search?q=pov+clock">persistence-of-vision clock</a>, I was hooked.  The designs I found online used microcontrollers, but that felt like cheating — I wanted to build my clock using only CMOS discrete logic.</p>
+        <p>I started designing the clock in March 2007 and finished the project two years later in April 2009. To my knowledge it's the only POV clock implemented entirely in discrete logic.</p>
 
         <h3>Design</h3>
-        <p>My POV clock is built from three separate modules:
+        <p>My POV clock uses three separate modules:
         <ol>
             <li>The digit board, which keeps time</li>
-            <li>The display board, which scans the digit board and converts it into an LED pattern</li>
+            <li>The display board, which scans the digit board and converts the time to an LED pattern</li>
             <li>The power board, which connects and provides power to the above.</li>
         </ol>
         Each module is independently testable with no dependencies on other boards.</p>
         <h3>The digit board
-        <div class="headingsmall">[<a href="http://github.com/swannman/povclock/blob/master/images/digit%20schematic.png?raw=true">schematic</a>]</div>
+            <div class="headingsmall">[<a href="http://github.com/swannman/povclock/blob/master/images/digit%20schematic.png?raw=true">schematic</a>, <a href="http://github.com/swannman/povclock/raw/master/images/digit%20board.png">pcb</a>]</div>
         </h3>
-        <p><em>A pulse is created every second that increments the least-significant digit of the time.  When that digit overflows, the next digit is incremented.  All the digits are connected through buffers to a shared output bus.  A decoder enables one buffer at a time and puts that digit's value on the bus.</em></p>
-        <p>The current time is stored in six 74HC192 synchronous BCD counters.  Each counter represents a digit in the time — the least-significant seconds digit, then the most-significant digit, then the least-significant minutes digit, etc.  Each counter is incremented by a pulse from its predecessor; in the case of least-significant digits, this occurs when the counter transitions from 9-&gt;0.  For most-significant digits, we need to overflow when being incremented from 5 to 6, so there's additional logic to catch this condition, increment the next counter, and reset itself to 0.  There's a short glitch while the counter reads 6 and hasn't been reset to 0, but it hasn't caused a problem in practice.</p>
-        <p>The least-significant seconds digit is incremented each second by the divide-by-256 output of an ICM7242 counter and RC circuit.  I originally used a crystal oscillator connected to a 74HC4060 for this portion of the circuit, but the CMOS output from the 4060 didn't have enough "oomph" to get the crystal started.  (Frustratingly, this worked on the breadboard but not on the PCB — the stray capacitance of the breadboard pins was just enough to get it going.  I wasted months debugging this.)  Although the RC circuit is considerably less precise, I had reached the point where a simple, working solution was preferable to one that was accurate but finicky. A header for an SDPT switch allows the user to set the clock using the divide-by-2 output of the ICM7242.</p>
-        <p>Each pair of counters is connected to a 74HC244 octal 3-state buffer that shares a four-bit output bus.  Each buffer defaults to a high-impedance output, but by selectively enabling one section at a time we can allow one digit's output to appear on the shared bus.  In other words, we can enable the first buffer and put the least-significant seconds digit on the bus, then enable the second buffer to put the most-significant seconds digit on.  If we do this in sequence, the bus will output each digit one after the other.</p>
-        <p>Driving each buffer's enable input is a single 74HC137 decoder, which takes a value between 0 and 6 and enables the corresponding buffer.</p>
-        <p>To interface with the display board, the digit board has a ten-pin connector:
+        <p><em>Every second, a pulse increments the value stored in a counter.  When it overflows, the next counter is incremented.  Each counter represents a digit in the time.  A decoder selects one digit at a time and puts that digit's value on the output bus.</em></p>
+        <p>The current time is stored in six 74HC192 synchronous BCD counters.  Each counter represents a digit — the least-significant seconds digit, then the most-significant digit, then the least-significant minutes digit, etc.  Each counter is incremented when its predecessor overflows, typically when transitioning from 9 to 0.  Most-significant digits require additional logic to overflow when they transition from 5 to 6.  A brief glitch occurs when the counter reads 6 and hasn't yet been reset to 0, but it doesn't cause a problem in practice.</p>
+        <p>The least-significant seconds digit is incremented by the divide-by-256 output of an ICM7242 counter and RC circuit.  A crystal oscillator and 74HC4060 would keep time more accurately, but the CMOS output from the 4060 is unable to get the crystal started.  An SPDT switch allows the user to advance the clock using the divide-by-2 output of the ICM7242.</p>
+        <p>Each counter is connected to a shared output bus through a 74HC244 3-state buffer.  The buffers default to a high-impedance state that is invisible to the bus.  A 74HC137 decoder enables one buffer at a time, making that counter's value visible on the bus.  The digit board drives the decoder to read each digit in sequence.  For example, selecting buffer 0 puts the least-significant seconds digit on the bus; selecting buffer 1 puts the most-significant seconds digit on.  By looping through every buffer we can read all the digits in the time.</p>
+        <p>The digit board interfaces with the display board through a ten-pin connector:
         <ol>
-            <li>Three bits of input to tell the 74HC137 which buffer (digit counter) should be enabled</li>
-            <li>Four bits of output from the selected digit counter (via the bus shared with each buffer)</li>
-            <li>5v, ground, and a reset pin which, when pulled high, clears each digit</li>
+            <li>Three bits of input to select which buffer should be enabled</li>
+            <li>Four bits of output for the digit value from the shared bus</li>
+            <li>5v, ground, and (partially implemented) reset</li>
         </ol></p>
         <h3>The display board
-        <div class="headingsmall">[<a href="http://github.com/swannman/povclock/blob/master/images/display%20schematic.png?raw=true">schematic</a>]</div>
+            <div class="headingsmall">[<a href="http://github.com/swannman/povclock/blob/master/images/display%20schematic.png?raw=true">schematic</a>, <a href="http://github.com/swannman/povclock/raw/master/images/display%20board.png">pcb</a>]</div>
         </h3>
-        </h3>
-        <p><em>A pulse from an optical interrupter wakes up the display board.  It asks the clock board for the value of the leftmost hours digit, processes it with a 7-segment-display driver, and chops up the result into a 5 x 5 pixel matrix. It lights up LEDs for each column in sequence then selects the next digit.</em></p>
-        <p>The display board is dormant until a pulse from an optical interrupter indicates that the LEDs are about to sweep across the face of the clock. The pulse sets a 74HC74 flip-flop and enables a 555 timer to begin oscillating.  The 555 increments a 74HC590 8-bit counter which coordinates actions across the rest of the display board.  The counter output is used as follows:
+        <p><em>A pulse from an external source wakes up the display board.  It selects the leftmost digit from the digit board, formats it for a 7-segment-display, and chops up the result into a 5 x 5 pixel matrix. It lights up LEDs for each column in sequence then selects the next digit to the right.</em></p>
+        <p>The display board sleeps until a pulse from an H21A1 optical interrupter indicates that the LEDs are about to sweep across the face of the clock. The pulse sets a 74HC74 flip-flop and starts a 555 timer oscillating.  The 555 increments a 74HC590 8-bit counter which coordinates actions across the rest of the display board.  The counter output is used as follows:
         <ol>
             <li>Bits 0-1 (LSB): not used</li>
             <li>Bits 2-4: select column to display on the LEDs (0 - 7)</li>
-            <li>Bits 5-7 (MSB): select digit to read from the clock board (0 - 7)</li>
+            <li>Bits 5-7 (MSB): select digit to read from the digit board (0 - 7)</li>
         </ol></p>
-        <p>Bits 5-7 interface with the clock board through the ten-pin connector.  These bits are negated with a 74HC04 hex inverter so that they count down from 7 to 0, selecting the hours digit first.  This is consistent with the left-to-right sweep of the LED arm.</p>
-        <p>The four output bits from the clock board are read by a 74HC4511 BCD to 7-segment decoder.  It converts the raw value into the segments of a physical digit.</p>
-        <p>While this digit is selected from the clock board, bits 2-4 from the counter cycle from 0-7.  These are demultiplexed by a 74HC237 into 7 individual lines. Each line goes high in turn, indicating which column of the physical digit to display:
+        <p>Bits 5-7 interface with the digit board through the ten-pin connector.  Although these bits count up, they are negated with a 74HC04 hex inverter to count down from 7 to 0, selecting the hours digit first.  This matches the left-to-right sweep of the LED arm.</p>
+        <p>The four output bits from the digit board are read by a 74HC4511 BCD to 7-segment decoder.  It converts the digit value into the segments of a physical digit.</p>
+        <p>While this digit is selected from the digit board, bits 2-4 from the counter cycle from 0-7.  These are demultiplexed by a 74HC237 into 7 individual lines. Each line goes high in turn, indicating which column of the physical digit to display:
         <ol>
             <li>Line 1: the left-most column</li>
-            <li>Lines 2-4: the middle columns (identical to each other)</li>
+            <li>Lines 2-4: the middle columns (identical)</li>
             <li>Line 5: the right-most column</li>
             <li>Lines 6-7: blank padding before the next digit</li>
         </ol>
-        These lines and the output of the 74HC4511 are fed into a complex network of AND and OR gates — 2x 74HC08, 2x 74HC32, and a 74HC4075. They determine which LEDs should light up for each column in the digit being displayed.  For example, if the middle segment of the digit should be lit up (for a 2, 3, 4, 5, 6, 8, or 9), then the AND and OR gates will enable the middle LED on columns 1-5.  If the upper-left segment should be lit up (for a 0, 4, 5, 6, 8, or 9) then the top three LEDs will be lit up, but only on column 1.</p>
-        <p>Here's how the 7-segment decoder and AND/OR gates turn the value 4 into LEDs:</p>
-        BCD to 7-segment decoder:
-        <code>
-            &nbsp;====
-            <strong><b>||&nbsp;&nbsp;||</b></strong>
-            <strong><b>||&nbsp;&nbsp;||</b></strong>
-            &nbsp;<strong><b>====</b></strong>
-            ||&nbsp;&nbsp;<strong><b>||</b></strong>
-            ||&nbsp;&nbsp;<strong><b>||</b></strong>
-            &nbsp;====</code>
-        <p>7-segment output and demux lines to LEDs via AND/OR network:</p>
-        <code>
-            <b>&nbsp;Line 1 2 3 4 5 6 7</b>
-            <b>LED1:</b> <strong><b>1</b></strong> 0 0 0 <strong><b>1</b></strong> 0 0
-            <b>LED2:</b> <strong><b>1</b></strong> 0 0 0 <strong><b>1</b></strong> 0 0
-            <b>LED3:</b> <strong><b>1 1 1 1 1</b></strong> 0 0
-            <b>LED4:</b> 0 0 0 0 <strong><b>1</b></strong> 0 0
-            <b>LED5:</b> 0 0 0 0 <strong><b>1</b></strong> 0 0</code>
-        <p>The AND/OR network drives the LEDs through a 74HC541 octal buffer that can handle the high output current.  The LEDs are connected to the display board by a 10-pin connector — five pins are outputs (one per LED), the other five are a common ground shared by all the LEDs.</p>
-        <p>When bits 2-4 of the 74HC590 have cycled through all the columns, bits 5-7 select the next digit and the digit-to-LED conversion process repeats again.</p>
-        <p>When the 74HC590 counter overflows, it resets the flip-flop and stops the 555 oscillator.  The board then sits idle until the next pulse from the optical interrupter.</p>
-        <h3>The power board</h3>
-        <p><em>This board provides power to the clock and display boards and connects their 10-pin interfaces.</em></p>
-        <p>The ten-pin connectors from the clock and display boards plug into the power board using ribbon cables.  The power board bridges the two connectors with a common bus and provides 5V via a MAX603 linear regulator.  A 9V battery connected to the MAX603 is a convenient power source.</p>
+        These lines and the output of the 74HC4511 are fed into a complex network of AND and OR gates — 2x 74HC08, 2x 74HC32, and a 74HC4075. They determine which LEDs should light up for each column in the digit.  For example, if the middle segment of the digit should be lit up (for a 2, 3, 4, 5, 6, 8, or 9), then the AND and OR gates will enable the middle LED on columns 1-5.  If the upper-left segment should be lit up (for a 0, 4, 5, 6, 8, or 9) then the top three LEDs will be lit up, but only on column 1.</p>
+        <p>The LEDs are driven by a 74HC541 high-output-current buffer.  The LEDs are connected to the display board by a second 10-pin connector — five pins are outputs (one per LED), the other five form a common ground shared by all the LEDs.</p>
+        <p>When bits 2-4 of the 74HC590 have cycled through every column, bits 5-7 select the next digit and the digit-to-LED conversion process repeats again.</p>
+        <p>When the 74HC590 counter overflows, it resets the flip-flop and stops the 555 oscillator.  The board sleeps until the next pulse from the optical interrupter.</p>
+        <h3>The power board
+            <div class="headingsmall">[<a href="http://github.com/swannman/povclock/raw/master/images/power%20board.png">pcb</a>]</div>
+        </h3>
+        <p><em>Provides power to the clock and display boards.</em></p>
+        <p>The ten-pin connectors from the clock and display boards plug into the power board using ribbon cables.  The power board bridges the two connectors with a common bus and provides 5V via a MAX603 linear regulator configured per the datasheet.  A 9V battery connected is a convenient power source.</p>
+        <p>The power board bus also provides convenient access points for a logic analyzer.</p>
         <h3>Hardware</h3>
-        <p><em>Five LEDs are arranged on an arm which sweeps back-and-forth. When the arm begins to sweep to the left, a piece of wire on the motor shaft trips the optical interrupter and wakes up the display board.</em></p>
-        <p>Creating the hardware mechanism was a surprisingly challenging part of the project.  Microcontroller POV clocks typically spin the entire board along with the LEDs, but that's not well-suited to my three bulky circuit boards.  My original design used a slip ring to interface between the static circuit boards and a spinning LED arm, but slip rings are specialty parts and very expensive.  Instead I decided to use a <a href="http://www.freezeray.com/flashFiles/treadle.htm">treadle linkage</a> to convert a spinning motor shaft into an oscillating back-and-forth motion.</p>
-        <p>While this works, the change in momentum when the linkage changes directions causes stress on the mechanism.  I weighted the base plate with lead to hold it steady, which helped.  I'm still searching for a better design — without wood- or metalworking tools, I have to rely on off-the-shelf construction kits. The current mechanism uses <a href="http://www.tamiya.com/english/products/list/educational/kit70001.htm">Tamiya's</a> line of motors and plastic construction materials, but I'm interested in reader suggestions for better construction systems.</p>
+        <p><em>Five LEDs are arranged on an arm which sweeps side-to-side. When the arm begins to sweep toward the right, an object trips the optical interrupter and wakes up the display board.</em></p>
+        <p>Designing the hardware mechanism was a challenge.  Microcontroller-based POV clocks typically spin the entire board along with the LEDs, but discrete logic doesn't lend itself to that.  My original design called for a <a href="http://en.wikipedia.org/wiki/Slip_ring">slip ring</a> to connect the circuit boards and spinning LED arm, but I wanted to avoid expensive specialty parts.  Instead I use a <a href="http://www.freezeray.com/flashFiles/treadle.htm">treadle linkage mechanism</a> to convert a spinning motor shaft into side-to-side motion.</p>
+        <p>A sewing pin attached to the motor shaft sweeps through the optical interrupter when the LED arm begins to sweep from left to right.  This wakes up the display board and displays the current time.</p>
         <h3>Test equipment</h3>
-        <p>I began with a <a href="http://swannman.wordpress.com/2006/06/18/tektronix-465-oscilloscope/">Tektronix 461 analog scope</a> and quickly realized that I needed a logic analyzer to sample and hold many digital signals at once.  An <a href="http://swannman.wordpress.com/2006/11/17/christmas-in-november/">HP 1631D</a> worked well for the initial build-out, but as the design progressed I needed more channels and a better screen.  I ended up with an <a href="http://swannman.wordpress.com/2007/06/09/live-and-in-color/">HP 16500B</a> with lots of headroom for future projects.</p> 
+        <p>I began the project with a <a href="http://swannman.wordpress.com/2006/06/18/tektronix-465-oscilloscope/">Tektronix 465 analog scope</a> but soon needed to sample and hold many digital signals at once.  An <a href="http://swannman.wordpress.com/2006/11/17/christmas-in-november/">HP 1631D</a> helped me design the digit board and an <a href="http://swannman.wordpress.com/2007/06/09/live-and-in-color/">HP 16500B</a> helped me design and integrate the display board.</p> 
         <h3>PCB design</h3>
-        <p>I laid out my printed circuit boards by hand and drew them in Adobe Illustrator. The standard file format for PCB creation is Gerber + NC Drill, not PDF, so I wrote a <a href="http://swannman.wordpress.com/projects/pdf2gerb/">PDF to Gerber converter</a> in Perl to bridge the gap and used <a href="http://batchpcb.com">BatchPCB</a> to produce the physical boards.</p>
-        <h3>License</h3>
-        <p>This project is open-source hardware released under the TAPR Open Hardware License. For more details, see <a href="http://www.tapr.org/OHL">the license page</a>.</p>
+        <p>I laid out each PCB by hand and drew the traces in Adobe Illustrator. The standard file format for PCB creation is Gerber + NC Drill, not PDF, so I wrote a <a href="http://swannman.wordpress.com/projects/pdf2gerb/">PDF to Gerber converter</a> to bridge the gap and ordered the boards through <a href="http://batchpcb.com">BatchPCB</a>.</p>
+        <h3>Project files and license</h3>
+        <p>Files associated with this project can be found <a href="http://github.com/swannman/povclock">here</a>.  You can browse them individually or <a href="http://github.com/swannman/POVClock/zipball/master">download a .zip archive</a>.</p>
+        <p>The project files include:
+        <ul>
+            <li>A parts list</li>
+            <li>Schematics in PDF and PNG format</li>
+            <li>PCB designs in PDF, PNG, and Gerber + NC Drill format</li>
+            <li>Adobe Illustrator source files for the above</li>
+        </ul></p>
+        <p>This project is released as open-source hardware under the <a href="http://www.tapr.org/OHL">TAPR Open Hardware License</a>. Please let me know if you incorporate elements of it into your own design.</p>
+        <h3>Contact</h3>
+        <p>If you have comments, suggestions, or issues — or if this project inspires you to build something cool — I'd love to hear from you.  Email me at <a href="mailto:swannman@mac.com?subject=POV%20Clock">swannman@mac.com</a>.</p>
     </div>
     <div class="right">
         <div class="highlightbox">
