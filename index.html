@@ -61,9 +61,9 @@
         <p>The four output bits from the digit board are read by a 74HC4511 BCD to 7-segment decoder.  It converts the digit value into the segments of a physical digit.</p>
         <p>While this digit is selected from the digit board, bits 2-4 from the counter cycle from 0-7.  These are demultiplexed by a 74HC237 into 7 individual lines. Each line goes high in turn, indicating which column of the physical digit to display:
         <ol>
-            <li>Line 1-2: the left-most columns</li>
-            <li>Lines 3-4: the middle columns</li>
-            <li>Line 4-5: the right-most columns</li>
+            <li>Lines 1-2: the left-most column</li>
+            <li>Lines 3-4: the middle column</li>
+            <li>Lines 4-5: the right-most column</li>
             <li>Lines 6-7: blank padding before the next digit</li>
         </ol>
         These lines and the output of the 74HC4511 are fed into a complex network of AND and OR gates — 2x 74HC08, 2x 74HC32, and a 74HC4075. They determine which LEDs should light up for each column in the digit.  For example, if the middle segment of the digit should be lit up (for a 2, 3, 4, 5, 6, 8, or 9), then the AND and OR gates will enable the middle LED on columns 1-5.  If the upper-left segment should be lit up (for a 0, 4, 5, 6, 8, or 9) then the top three LEDs will be lit up, but only on column 1.</p>
